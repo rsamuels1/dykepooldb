@@ -31,7 +31,7 @@
             '<div class="footer-right">' +
             '<a href="https://www.dykepool.com" target="_blank">Dyke Pool Website</a>' +
             '<span class="footer-sep">·</span>' +
-            '<a href="https://github.com/dykepoolreviews/" target="_blank">GitHub</a>' +
+            '<a href="https://github.com/dykepooldb/" target="_blank">GitHub</a>' +
             '<span class="footer-sep">·</span>' +
             '<span>© 2026 homoveralls</span>' +
             '</div>';
