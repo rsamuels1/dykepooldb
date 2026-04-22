@@ -29,6 +29,9 @@
     .btn-approve:hover { filter: brightness(1.1); }
     .btn-reject:hover  { border-color: rgba(255,80,80,0.7); color: rgba(255,80,80,1); }
     .empty-state { padding: 80px 20px; text-align: center; color: var(--adim); font-size: 11px; letter-spacing: 3px; text-transform: uppercase; }
+    .section-title { font-family: var(--fhead); font-size: 24px; letter-spacing: 3px; color: var(--adim); margin: 48px 0 16px; }
+    .btn-delete { background: transparent; color: rgba(255,80,80,0.8); border: 1px solid rgba(255,80,80,0.3); font-family: var(--fbody); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; padding: 10px 20px; cursor: pointer; }
+    .btn-delete:hover { border-color: rgba(255,80,80,0.7); color: rgba(255,80,80,1); }
     </style>
 </head>
 <body>
@@ -77,7 +80,7 @@
                 </div>
                 <div class="pending-field">
                     <div class="pending-label">Submitted</div>
-                    <div class="pending-value">{{ venue['created_at'][:10] }}</div>
+                    <div class="pending-value">{{ venue['created_at'].strftime('%Y-%m-%d') if venue['created_at'] else '—' }}</div>
                 </div>
             </div>
 
@@ -98,6 +101,30 @@
         {% endfor %}
     {% else %}
         <div class="empty-state">No pending submissions</div>
+    {% endif %}
+
+    {% if approved %}
+    <div class="section-title">PUBLISHED VENUES</div>
+    {% for venue in approved %}
+    {% set r = ratings[venue['rating']] %}
+    <div class="pending-card">
+        <div class="pending-head">
+            <div>
+                <div class="pending-name">{{ venue['venue_name'] }}</div>
+                <div class="pending-loc">{{ venue['location'] }}</div>
+            </div>
+            <div style="font-family:var(--fhead); font-size:14px; letter-spacing:2px; color:{{ '#39FF14' if venue['rating'] == 5 else ('#C8FF00' if venue['rating'] == 4 else ('#FFD000' if venue['rating'] == 3 else ('#FF7A00' if venue['rating'] == 2 else ('#FF3B5C' if venue['rating'] == 1 else '#888')))) }};">
+                {{ r['stars'] }} {{ r['label'] }}
+            </div>
+        </div>
+        <div class="pending-actions">
+            <form method="POST" action="/admin/delete/{{ venue['id'] }}" style="margin:0;">
+                <button type="submit" class="btn-delete"
+                        onclick="return confirm('Permanently delete {{ venue['venue_name'] }}?')">✕ Delete</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
     {% endif %}
 </div>
 

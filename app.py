@@ -300,7 +300,9 @@ def admin():
     cur = db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT * FROM venues WHERE status = 'pending' ORDER BY created_at DESC")
     pending = cur.fetchall()
-    return render_template("admin.html", pending=pending, ratings=RATINGS)
+    cur.execute("SELECT * FROM venues WHERE status = 'approved' ORDER BY created_at DESC")
+    approved = cur.fetchall()
+    return render_template("admin.html", pending=pending, approved=approved, ratings=RATINGS)
 
 
 @app.route("/admin/approve/<int:venue_id>", methods=["POST"])
@@ -319,6 +321,16 @@ def admin_reject(venue_id):
     db = get_db()
     cur = db.cursor()
     cur.execute("DELETE FROM venues WHERE id = %s AND status = 'pending'", [venue_id])
+    db.commit()
+    return redirect(url_for("admin"))
+
+
+@app.route("/admin/delete/<int:venue_id>", methods=["POST"])
+@admin_required
+def admin_delete(venue_id):
+    db = get_db()
+    cur = db.cursor()
+    cur.execute("DELETE FROM venues WHERE id = %s", [venue_id])
     db.commit()
     return redirect(url_for("admin"))
 
