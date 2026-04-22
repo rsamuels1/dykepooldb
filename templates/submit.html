@@ -36,10 +36,10 @@
 }
 .rating-option-badge .stars { font-size: 14px; letter-spacing: 1px; }
 .r5-badge { color: #39FF14; }
-.r4-badge { color: #39FF14; }
-.r3-badge { color: #39FF14; }
-.r2-badge { color: #FFD000; }
-.r1-badge { color: #FF8C00; }
+.r4-badge { color: #C8FF00; }
+.r3-badge { color: #FFD000; }
+.r2-badge { color: #FF7A00; }
+.r1-badge { color: #FF3B5C; }
 .r0-badge { color: #666; }
 .rating-option-desc { padding: 14px 16px; font-size: 11px; line-height: 1.75; color: rgba(255,255,255,0.72); display: flex; align-items: center; }
 
@@ -73,14 +73,17 @@
 
 {% block content %}
 <div class="form-page">
-    <div class="eyebrow">◈ Community Review</div>
+    <div class="eyebrow">Community Review</div>
     <h1>ADD A<br>VENUE</h1>
+    <p style="font-size:13px; line-height:1.85; color:var(--adim); border-left:2px solid var(--afaint); padding-left:14px; margin-bottom:32px;">
+        Submissions are reviewed before going live. We'll publish it shortly after.
+    </p>
 
     {% if error %}
     <div class="error-banner">{{ error }}</div>
     {% endif %}
 
-    <form method="POST" action="/submit">
+    <form method="POST" action="/submit" enctype="multipart/form-data">
 
         <div class="form-section">
             <label class="form-label" for="venue_name">Venue Name</label>
@@ -203,7 +206,27 @@
             <div class="form-hint">Optional — be specific about what makes it worth knowing.</div>
         </div>
 
+        <div class="form-section">
+            <label class="form-label" for="photo">Photo</label>
+            <label for="photo" id="photo-label" style="display:flex; align-items:center; gap:14px; background:var(--bg2); border:1px solid var(--afaint); padding:16px; cursor:pointer; transition:border-color 0.15s;">
+                <span style="font-size:22px; flex-shrink:0;">📷</span>
+                <span id="photo-text" style="font-size:12px; color:rgba(255,255,255,0.45); letter-spacing:0.5px;">Choose a photo…</span>
+            </label>
+            <input type="file" id="photo" name="photo" accept="image/*"
+                   style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;">
+            <div class="form-hint">Optional — JPG, PNG, WebP or GIF, max 10 MB.</div>
+        </div>
+
         <button type="submit" class="submit-btn">Submit Review</button>
+
+        <script>
+        document.getElementById('photo').addEventListener('change', function () {
+            const label = document.getElementById('photo-text');
+            label.textContent = this.files[0] ? this.files[0].name : 'Choose a photo…';
+            label.style.color = this.files[0] ? 'var(--w)' : 'rgba(255,255,255,0.45)';
+            document.getElementById('photo-label').style.borderColor = this.files[0] ? 'var(--amber)' : '';
+        });
+        </script>
     </form>
 </div>
 {% endblock %}

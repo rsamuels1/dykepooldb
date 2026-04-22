@@ -15,12 +15,12 @@
     const nav = document.querySelector('nav');
     if (nav) {
         nav.innerHTML =
-            '<a href="/" class="logo">DYKE POOL DB</a>' +
+            '<a href="/index.html" class="logo">DYKE POOL DB</a>' +
             '<ul class="nav-links">' +
             '<li>' + a('/pool-database', 'Database') + '</li>' +
             '<li class="hide">' + a('/stats.html', 'Stats') + '</li>' +
             '<li class="hide">' + a('/about.html', 'About') + '</li>' +
-            '<li>' + a('/contributor.html', 'Contribute', 'pill') + '</li>' +
+            '<li>' + a('/submit', 'Contribute', 'pill') + '</li>' +
             '</ul>';
     }
 

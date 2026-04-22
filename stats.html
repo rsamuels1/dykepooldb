@@ -13,7 +13,7 @@
 <nav></nav>
 
 <div class="page">
-<div class="eyebrow">◈ By the numbers</div>
+<div class="eyebrow">By the numbers</div>
 <h1>THE STATS</h1>
 
 <!-- BIG NUMBERS -->
@@ -23,21 +23,25 @@
 <div class="num-value loading" id="stat-total">—</div>
 </div>
 <div class="num-card">
+<div class="num-label">Total Tables</div>
+<div class="num-value loading" id="stat-tables">—</div>
+</div>
+<div class="num-card">
 <div class="num-label">Cities</div>
 <div class="num-value loading" id="stat-cities">—</div>
 </div>
 <div class="num-card">
-<div class="num-label">Contributors</div>
+<div class="num-label">Avg Rating</div>
 <div class="num-value loading" id="stat-contributors">—</div>
 </div>
-<div class="num-card">
+<!-- <div class="num-card">
 <div class="num-label">This Year</div>
 <div class="num-value loading" id="stat-year">—</div>
-</div>
+</div> -->
 </div>
 
 <!-- RATING BREAKDOWN -->
-<div class="section-eyebrow">◈ Breakdown</div>
+<div class="section-eyebrow">Breakdown</div>
 <div class="section-title">BY RATING</div>
 <div class="rating-bars">
 <div class="rbar">
@@ -45,23 +49,23 @@
 <div class="rbar-track"><div class="rbar-fill r5-fill" id="bar-5"></div></div>
 <div class="rbar-count" id="count-5">—</div>
 </div>
-    <div class="rbar">
+<div class="rbar">
 <div class="rbar-label">🍒🍒🍒🍒 Perfect</div>
-<div class="rbar-track"><div class="rbar-fill r3-fill" id="bar-4"></div></div>
+<div class="rbar-track"><div class="rbar-fill r4-fill" id="bar-4"></div></div>
 <div class="rbar-count" id="count-4">—</div>
 </div>
-    <div class="rbar">
-<div class="rbar-label">🍒🍒🍒 Excellent</div>
+<div class="rbar">
+<div class="rbar-label">🍒🍒🍒 Pretty Good</div>
 <div class="rbar-track"><div class="rbar-fill r3-fill" id="bar-3"></div></div>
 <div class="rbar-count" id="count-3">—</div>
 </div>
 <div class="rbar">
-<div class="rbar-label">🍒🍒 Worth A Trip</div>
+<div class="rbar-label">🍒🍒 Decent</div>
 <div class="rbar-track"><div class="rbar-fill r2-fill" id="bar-2"></div></div>
 <div class="rbar-count" id="count-2">—</div>
 </div>
 <div class="rbar">
-<div class="rbar-label">🍒 Solid</div>
+<div class="rbar-label">🍒 Okay</div>
 <div class="rbar-track"><div class="rbar-fill r1-fill" id="bar-1"></div></div>
 <div class="rbar-count" id="count-1">—</div>
 </div>
@@ -73,116 +77,75 @@
 </div>
 
 <!-- CITIES -->
-<div class="section-eyebrow">◈ Coverage</div>
+<div class="section-eyebrow">Coverage</div>
 <div class="section-title">BY CITY</div>
 <div class="city-grid" id="city-grid">
 <div class="loading-state">Loading...</div>
 </div>
 
-<!-- CONTRIBUTORS -->
-<div class="section-eyebrow">◈ Community</div>
-<div class="section-title">CONTRIBUTORS</div>
-<div class="contrib-grid" id="contrib-grid">
-<div class="loading-state">Loading...</div>
+<!-- COST + BATHROOMS -->
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:40px; margin-top:60px;">
+<div>
+<div class="section-eyebrow">Pricing</div>
+<div class="section-title">BY COST</div>
+<div id="price-table"><div class="loading-state">Loading...</div></div>
+</div>
+<div>
+<div class="section-eyebrow">Facilities</div>
+<div class="section-title">BY BATHROOM</div>
+<div id="bathroom-table"><div class="loading-state">Loading...</div></div>
+</div>
 </div>
 </div>
 
-<script src="/config.js"></script>
 <script>
-function parseRating(line) {
-const stars = (line.match(/⭐/g) || []).length;
-if (/^[ㄨ✗Xx]/.test(line) && stars === 0) return 0;
-if (stars >= 1 && stars <= 3) return stars;
-return null;
-}
-
-function parsePost(text) {
-if (!text || !/#CBDB/i.test(text)) return null;
-const lines = text.replace(/\r/g, '').split('\n');
-if (lines.length < 4) return null;
-const location = lines[1].trim();
-const ratingNum = parseRating(lines[2].trim());
-if (ratingNum === null || !location.includes(',')) return null;
-return { location, ratingNum };
-}
-
 async function loadStats() {
-const reviews = [];
-await Promise.all([...APPROVED].map(async handle => {
-try {
-const url = `${BSKY_API}/app.bsky.feed.getAuthorFeed?actor=${encodeURIComponent(handle)}&limit=${FETCH_LIMIT}&filter=posts_no_replies`;
-const res = await fetch(url);
-if (!res.ok) return;
-const data = await res.json();
-for (const item of (data.feed || [])) {
-const post = item.post;
-if (!post) continue;
-const text = post.record?.text || '';
-if (!/#CBDB/i.test(text)) continue;
-const parsed = parsePost(text);
-if (!parsed) continue;
-reviews.push({
-handle,
-location: parsed.location,
-r: parsed.ratingNum,
-createdAt: post.record?.createdAt || '',
-});
-}
-} catch(e) { console.warn(handle, e); }
-}));
-renderStats(reviews);
-}
+    const res = await fetch('/api/stats');
+    const d = await res.json();
 
-function renderStats(reviews) {
-const total = reviews.length;
-const cities = [...new Set(reviews.map(r => r.location))];
-const contributors = [...new Set(reviews.map(r => r.handle))];
-const yearStart = new Date(); yearStart.setFullYear(yearStart.getFullYear() - 1);
-const thisYear = reviews.filter(r => r.createdAt && new Date(r.createdAt) >= yearStart).length;
+    set('stat-total', d.total);
+    set('stat-tables', d.total_tables);
+    set('stat-cities', d.cities);
+    set('stat-contributors', d.avg_rating);
+    set('stat-year', d.this_year);
 
-set('stat-total', total);
-set('stat-cities', cities.length);
-set('stat-contributors', contributors.length);
-set('stat-year', thisYear);
+    const max = Math.max(...Object.values(d.by_rating), 1);
+    [5, 4, 3, 2, 1, 0].forEach(n => {
+        set(`count-${n}`, d.by_rating[n] || 0);
+        setTimeout(() => {
+            const bar = document.getElementById(`bar-${n}`);
+            if (bar) bar.style.width = (((d.by_rating[n] || 0) / max) * 100) + '%';
+        }, 100);
+    });
 
-const counts = {3:0, 2:0, 1:0, 0:0};
-reviews.forEach(r => counts[r.r] = (counts[r.r] || 0) + 1);
-const maxR = Math.max(...Object.values(counts), 1);
-[3,2,1,0].forEach(n => {
-set(`count-${n}`, counts[n]);
-setTimeout(() => {
-document.getElementById(`bar-${n}`).style.width = ((counts[n] / maxR) * 100) + '%';
-}, 100);
-});
+    document.getElementById('city-grid').innerHTML = d.by_city.length
+        ? d.by_city.map(([city, n]) => `
+            <div class="city-row">
+                <span class="city-name">${city}</span>
+                <span class="city-count">${n}</span>
+            </div>`).join('')
+        : '<div class="loading-state">No data yet.</div>';
 
-const cityMap = {};
-reviews.forEach(r => cityMap[r.location] = (cityMap[r.location] || 0) + 1);
-const sortedCities = Object.entries(cityMap).sort((a,b) => b[1] - a[1]);
-document.getElementById('city-grid').innerHTML = sortedCities.length
-? sortedCities.map(([city, n]) => `
-<div class="city-row">
-<span class="city-name">${city}</span>
-<span class="city-count">${n}</span>
-</div>`).join('')
-: '<div class="loading-state">No data yet.</div>';
+    function breakdown(data, containerId) {
+        const total = data.reduce((s, [, n]) => s + n, 0) || 1;
+        return document.getElementById(containerId).innerHTML = data.length
+            ? data.map(([label, n]) => `
+                <div class="city-row">
+                    <span class="city-name">${label}</span>
+                    <span class="city-count">${n}</span>
+                </div>`).join('')
+            : '<div class="loading-state">No data yet.</div>';
+    }
 
-const contribMap = {};
-reviews.forEach(r => contribMap[r.handle] = (contribMap[r.handle] || 0) + 1);
-const sortedContribs = Object.entries(contribMap).sort((a,b) => b[1] - a[1]);
-document.getElementById('contrib-grid').innerHTML = sortedContribs.length
-? sortedContribs.map(([handle, n]) => `
-<div class="contrib-row">
-<span class="contrib-handle">@${handle}</span>
-<span class="contrib-count">${n} ${n === 1 ? 'entry' : 'entries'}</span>
-</div>`).join('')
-: '<div class="loading-state">No contributors yet.</div>';
+    breakdown(d.by_price, 'price-table');
+    breakdown(d.by_bathroom, 'bathroom-table');
 
-document.querySelectorAll('.num-value').forEach(el => el.classList.remove('loading'));
+    document.querySelectorAll('.num-value').forEach(el => el.classList.remove('loading'));
 }
 
 function set(id, val) {
-const el = document.getElementById(id);
-if (el) el.textContent = val;
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
 }
 
 loadStats();
