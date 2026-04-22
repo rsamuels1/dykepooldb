@@ -1,10 +1,13 @@
 import os
 import smtplib
-import sqlite3
 import uuid
+from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from functools import wraps
 
+import psycopg2
+import psycopg2.errors
+import psycopg2.extras
 from werkzeug.utils import secure_filename
 
 from dotenv import load_dotenv
@@ -24,10 +27,11 @@ ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "gif"}
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
-DATABASE = os.environ.get(
-    "DATABASE_PATH",
-    os.path.join(os.path.dirname(__file__), "pool.db")
-)
+
+DATABASE_URL = os.environ.get("DATABASE_URL", "")
+# Railway (and some other hosts) provide postgres:// but psycopg2 requires postgresql://
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 RATINGS = {
     5: {"label": "LEGENDARY",   "stars": "🍒🍒🍒🍒🍒", "cls": "r5"},
@@ -44,8 +48,7 @@ BATHROOM_OPTIONS = ["Gender-Neutral", "Gendered", "None"]
 def get_db():
     db = getattr(g, "_database", None)
     if db is None:
-        db = g._database = sqlite3.connect(DATABASE)
-        db.row_factory = sqlite3.Row
+        db = g._database = psycopg2.connect(DATABASE_URL)
     return db
 
 
@@ -57,22 +60,40 @@ def close_connection(exception):
 
 
 def init_db():
-    db = sqlite3.connect(DATABASE)
+    conn = psycopg2.connect(DATABASE_URL)
+    cur = conn.cursor()
     with open(os.path.join(os.path.dirname(__file__), "schema.sql")) as f:
-        db.executescript(f.read())
-    db.commit()
-    db.close()
+        sql = f.read()
+    for stmt in sql.split(";"):
+        stmt = stmt.strip()
+        if stmt:
+            cur.execute(stmt)
+    conn.commit()
+    cur.close()
+    conn.close()
 
 
 def migrate_db():
-    """Add status column to databases that predate the review workflow."""
-    db = sqlite3.connect(DATABASE)
+    conn = psycopg2.connect(DATABASE_URL)
+    cur = conn.cursor()
     try:
-        db.execute("ALTER TABLE venues ADD COLUMN status TEXT NOT NULL DEFAULT 'approved'")
-        db.commit()
-    except sqlite3.OperationalError:
-        pass  # column already exists
-    db.close()
+        cur.execute("ALTER TABLE venues ADD COLUMN status TEXT NOT NULL DEFAULT 'approved'")
+        conn.commit()
+    except psycopg2.errors.DuplicateColumn:
+        conn.rollback()
+    finally:
+        cur.close()
+        conn.close()
+
+
+def _table_exists():
+    conn = psycopg2.connect(DATABASE_URL)
+    cur = conn.cursor()
+    cur.execute("SELECT to_regclass('public.venues')")
+    result = cur.fetchone()
+    cur.close()
+    conn.close()
+    return result[0] is not None
 
 
 def send_submission_email(venue_name, location, rating_int):
@@ -120,7 +141,7 @@ def admin_required(f):
 
 
 # Run DB setup regardless of how the app is started (gunicorn or direct)
-if not os.path.exists(DATABASE):
+if not _table_exists():
     init_db()
 else:
     migrate_db()
@@ -131,21 +152,22 @@ else:
 @app.route("/pool-database")
 def pool_database():
     db = get_db()
-    venues = db.execute(
-        "SELECT * FROM venues WHERE status = 'approved' ORDER BY created_at DESC"
-    ).fetchall()
-    prices = [r[0] for r in db.execute(
+    cur = db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT * FROM venues WHERE status = 'approved' ORDER BY created_at DESC")
+    venues = cur.fetchall()
+    cur.execute(
         "SELECT DISTINCT price_per_game FROM venues WHERE status = 'approved' ORDER BY price_per_game"
-    ).fetchall()]
+    )
+    prices = [r["price_per_game"] for r in cur.fetchall()]
     return render_template("pool_database.html", venues=venues, ratings=RATINGS, prices=prices)
 
 
 @app.route("/pool-database/<int:venue_id>")
 def venue_detail(venue_id):
     db = get_db()
-    venue = db.execute(
-        "SELECT * FROM venues WHERE id = ? AND status = 'approved'", [venue_id]
-    ).fetchone()
+    cur = db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT * FROM venues WHERE id = %s AND status = 'approved'", [venue_id])
+    venue = cur.fetchone()
     if venue is None:
         return "Venue not found", 404
     return render_template("venue_detail.html", venue=venue, ratings=RATINGS)
@@ -181,11 +203,12 @@ def submit():
 
             if not error:
                 db = get_db()
-                db.execute(
+                cur = db.cursor()
+                cur.execute(
                     """INSERT INTO venues
                        (venue_name, location, num_tables, price_per_game,
                         bathroom_type, rating, notes, photo_url, status)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')""",
+                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pending')""",
                     [venue_name, location, int(num_tables), price_per_game,
                      bathroom_type, int(rating), notes, photo_url],
                 )
@@ -208,25 +231,26 @@ def submit_thanks():
 
 @app.route("/api/stats")
 def api_stats():
-    from datetime import datetime, timedelta
     db = get_db()
-    venues = db.execute(
+    cur = db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute(
         "SELECT rating, location, created_at, num_tables, price_per_game, bathroom_type "
         "FROM venues WHERE status = 'approved'"
-    ).fetchall()
+    )
+    venues = cur.fetchall()
 
     by_rating = {i: 0 for i in range(6)}
     cities = {}
     by_price = {}
     by_bathroom = {}
-    year_ago = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
+    year_ago = datetime.now() - timedelta(days=365)
     this_year = 0
     total_tables = 0
 
     for v in venues:
         by_rating[v["rating"]] = by_rating.get(v["rating"], 0) + 1
         cities[v["location"]] = cities.get(v["location"], 0) + 1
-        if v["created_at"] and v["created_at"][:10] >= year_ago:
+        if v["created_at"] and v["created_at"] >= year_ago:
             this_year += 1
         total_tables += v["num_tables"] or 0
         price = v["price_per_game"] or "Unknown"
@@ -273,9 +297,9 @@ def admin_logout():
 @admin_required
 def admin():
     db = get_db()
-    pending = db.execute(
-        "SELECT * FROM venues WHERE status = 'pending' ORDER BY created_at DESC"
-    ).fetchall()
+    cur = db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT * FROM venues WHERE status = 'pending' ORDER BY created_at DESC")
+    pending = cur.fetchall()
     return render_template("admin.html", pending=pending, ratings=RATINGS)
 
 
@@ -283,7 +307,8 @@ def admin():
 @admin_required
 def admin_approve(venue_id):
     db = get_db()
-    db.execute("UPDATE venues SET status = 'approved' WHERE id = ?", [venue_id])
+    cur = db.cursor()
+    cur.execute("UPDATE venues SET status = 'approved' WHERE id = %s", [venue_id])
     db.commit()
     return redirect(url_for("admin"))
 
@@ -292,13 +317,14 @@ def admin_approve(venue_id):
 @admin_required
 def admin_reject(venue_id):
     db = get_db()
-    db.execute("DELETE FROM venues WHERE id = ? AND status = 'pending'", [venue_id])
+    cur = db.cursor()
+    cur.execute("DELETE FROM venues WHERE id = %s AND status = 'pending'", [venue_id])
     db.commit()
     return redirect(url_for("admin"))
 
 
 if __name__ == "__main__":
-    if not os.path.exists(DATABASE):
+    if not _table_exists():
         init_db()
     else:
         migrate_db()
