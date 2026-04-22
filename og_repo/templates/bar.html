@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>{{ bar.name }}</h1>
+  <p>{{ bar.city }}</p>
+  {% if bar.photo %}
+    <img src="{{ url_for('static', filename='uploads/' + bar.photo) }}" alt="{{ bar.name }}">
+  {% endif %}
+  <ul>
+    <li>Tables: {{ bar.tables }}</li>
+    <li>Cost: ${{ "%.2f"|format(bar.cost_per_game) }}/game</li>
+    <li>Bathrooms: {{ bar.bathrooms }}</li>
+    <li>Rating: {{ '⭐' * bar.rating }}</li>
+    <li>ATM: {{ '✅' if bar.has_atm else '❌' }}</li>
+    <li>Hand Chalk: {{ '✅' if bar.has_chalk else '❌' }}</li>
+    <li>Good Lighting: {{ '✅' if bar.good_lighting else '❌' }}</li>
+    <li>Level Table: {{ '✅' if bar.level_table else '❌' }}</li>
+  </ul>
+  <p>{{ bar.notes }}</p>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Add a Bar</h1>
+  <form method="POST" enctype="multipart/form-data">
+    <input name="name" placeholder="Bar name" required>
+    <input name="city" placeholder="City, ST" required>
+    <input name="tables" type="number" placeholder="# of tables" required>
+    <input name="cost_per_game" type="number" step="0.25" placeholder="Cost per game ($)">
+    <select name="bathrooms">
+      <option>Gendered</option>
+      <option>All-Gender</option>
+      <option>Single-Stall</option>
+    </select>
+    <select name="rating">
+      {% for i in range(1, 6) %}<option value="{{ i }}">{{ i }} ⭐</option>{% endfor %}
+    </select>
+    <label><input type="checkbox" name="has_atm"> ATM on-site</label>
+    <label><input type="checkbox" name="has_chalk"> Hand chalk available</label>
+    <label><input type="checkbox" name="good_lighting"> Good lighting</label>
+    <label><input type="checkbox" name="level_table"> Level table(s)</label>
+    <textarea name="notes" placeholder="Notes..."></textarea>
+    <input type="file" name="photo" accept="image/*">
+    <button type="submit">Submit Review</button>
+  </form>
+{% endblock %}

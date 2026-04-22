@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Pool Bar Reviews</h1>
+  {% for bar in bars %}
+  <div class="bar-card">
+    {% if bar.photo %}
+      <img src="{{ url_for('static', filename='uploads/' + bar.photo) }}" alt="{{ bar.name }}">
+    {% endif %}
+    <h2><a href="/bar/{{ bar.id }}">{{ bar.name }}</a></h2>
+    <p>{{ bar.city }} · {{ bar.tables }} table(s) · ${{ "%.2f"|format(bar.cost_per_game) }}/game</p>
+    <p>{{ '⭐' * bar.rating }}</p>
+  </div>
+  {% endfor %}
+{% endblock %}

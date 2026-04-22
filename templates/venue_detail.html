@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}{{ venue['venue_name'] }} — Dyke Pool Reviews{% endblock %}
+
+{% block head %}
+<style>
+.detail-page { max-width: 720px; margin: 0 auto; padding: 32px 16px 64px; }
+
+.detail-back { display: inline-block; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--adim); text-decoration: none; margin-bottom: 28px; }
+.detail-back:hover { color: var(--green); }
+
+.detail-hero { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 40px; }
+@media (max-width: 560px) { .detail-hero { grid-template-columns: 1fr; } }
+
+.detail-img { aspect-ratio: 16/10; overflow: hidden; }
+.detail-img svg { width: 100%; height: 100%; display: block; }
+
+.detail-stamp {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--fhead); font-size: 13px; letter-spacing: 3px;
+    margin-bottom: 12px;
+}
+.detail-stamp.r5 { color: #39FF14; }
+.detail-stamp.r4 { color: #39FF14; }
+.detail-stamp.r3 { color: #39FF14; }
+.detail-stamp.r2 { color: #FFD000; }
+.detail-stamp.r1 { color: #FF8C00; }
+.detail-stamp.r0 { color: #666; }
+
+.detail-name { font-family: var(--fhead); font-size: clamp(28px, 6vw, 48px); letter-spacing: 2px; line-height: 1.05; margin-bottom: 6px; }
+.detail-loc { font-size: 11px; letter-spacing: 3px; color: var(--adim); text-transform: uppercase; margin-bottom: 20px; }
+
+.detail-meta { display: flex; flex-direction: column; justify-content: flex-end; gap: 0; }
+
+.meta-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    border-bottom: 1px solid var(--afaint); padding: 11px 0;
+    font-size: 11px;
+}
+.meta-row:first-child { border-top: 1px solid var(--afaint); }
+.meta-key { letter-spacing: 3px; text-transform: uppercase; color: var(--adim); }
+.meta-val { color: var(--w); letter-spacing: 1px; }
+
+.detail-notes { margin-top: 36px; }
+.detail-notes-label { font-size: 9px; letter-spacing: 4px; text-transform: uppercase; color: var(--green); margin-bottom: 10px; }
+.detail-notes-body { font-size: 13px; line-height: 1.9; color: rgba(255,255,255,0.72); border-left: 2px solid var(--afaint); padding-left: 16px; }
+
+.detail-foot { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--afaint); display: flex; justify-content: space-between; align-items: center; }
+.detail-date { font-size: 10px; letter-spacing: 2px; color: var(--adim); }
+.detail-edit { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--adim); text-decoration: none; }
+.detail-edit:hover { color: var(--green); }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set r = ratings[venue['rating']] %}
+<div class="detail-page">
+    <a href="/pool-database" class="detail-back">← All Venues</a>
+
+    <div class="detail-hero">
+        <div class="detail-img">
+            {% if venue['photo_url'] %}
+            <img src="{{ venue['photo_url'] if venue['photo_url'].startswith('http') else '/' + venue['photo_url'] }}" alt="{{ venue['venue_name'] }}" style="width:100%;height:100%;object-fit:cover;display:block;">
+            {% else %}
+            <svg viewBox="0 0 400 260" xmlns="http://www.w3.org/2000/svg" aria-label="Pool table">
+                <rect width="400" height="260" fill="#2a1a0a" rx="6"/>
+                <rect x="28" y="28" width="344" height="204" fill="#1a4d1a" rx="3"/>
+                <circle cx="36"  cy="36"  r="10" fill="#0d0900"/>
+                <circle cx="200" cy="36"  r="8"  fill="#0d0900"/>
+                <circle cx="364" cy="36"  r="10" fill="#0d0900"/>
+                <circle cx="36"  cy="224" r="10" fill="#0d0900"/>
+                <circle cx="200" cy="224" r="8"  fill="#0d0900"/>
+                <circle cx="364" cy="224" r="10" fill="#0d0900"/>
+                <circle cx="200" cy="130" r="3" fill="rgba(255,255,255,0.25)"/>
+                <circle cx="120" cy="130" r="2" fill="rgba(255,255,255,0.15)"/>
+                <circle cx="280" cy="130" r="12" fill="#ffffff" opacity="0.9"/>
+                <circle cx="160" cy="118" r="11" fill="#111111" opacity="0.85"/>
+                <circle cx="160" cy="118" r="5"  fill="#ffffff" opacity="0.8"/>
+            </svg>
+            {% endif %}
+        </div>
+
+        <div class="detail-meta">
+            <div class="detail-stamp {{ r['cls'] }}">{{ r['stars'] }} {{ r['label'] }}</div>
+            <div class="detail-name">{{ venue['venue_name'] }}</div>
+            <div class="detail-loc">{{ venue['location'] }}</div>
+
+            <div class="meta-row">
+                <span class="meta-key">Tables</span>
+                <span class="meta-val">{{ venue['num_tables'] }} table{{ 's' if venue['num_tables'] != 1 else '' }}</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-key">Price</span>
+                <span class="meta-val">{{ venue['price_per_game'] }}/game</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-key">Bathrooms</span>
+                <span class="meta-val">{{ venue['bathroom_type'] }}</span>
+            </div>
+        </div>
+    </div>
+
+    {% if venue['notes'] %}
+    <div class="detail-notes">
+        <div class="detail-notes-label">Notes</div>
+        <div class="detail-notes-body">{{ venue['notes'] }}</div>
+    </div>
+    {% endif %}
+
+    <div class="detail-foot">
+        <span class="detail-date">Added {{ venue['created_at'][:10] }}</span>
+    </div>
+</div>
+{% endblock %}

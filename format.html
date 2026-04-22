@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Format — Cheeseburger Database</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="page-format">
+<nav></nav>
+
+<div class="page">
+<div class="eyebrow">◈ Contributor Format</div>
+<h1>HOW TO<br>POST</h1>
+
+<p class="intro">
+Once you're approved, post to Bluesky in this format and tag it <em>#CBDB</em>.
+The parser reads each line in order — follow it exactly and it indexes automatically.
+</p>
+
+<!-- STEP 1: RATINGS -->
+<div class="section">
+<div class="section-label">◈ Step 1</div>
+<div class="section-title">PICK YOUR RATING</div>
+<div class="rating-rows">
+<div class="rating-row r3">
+<div class="rr-left">
+<div class="rr-stars">⭐⭐⭐</div>
+<div class="rr-name">LEGENDARY</div>
+</div>
+<div class="rr-right">
+<div class="rr-desc">Exceptional. A benchmark. The kind of burger you go back for and think about often. Reserve it accordingly — the rating only means something if it's rare.</div>
+</div>
+</div>
+<div class="rating-row r2">
+<div class="rr-left">
+<div class="rr-stars">⭐⭐</div>
+<div class="rr-name">WORTH A TRIP</div>
+</div>
+<div class="rr-right">
+<div class="rr-desc">Notably good. Worth a specific visit. Something about it — the build, the value, the experience — is genuinely excellent and sets it apart.</div>
+</div>
+</div>
+<div class="rating-row r1">
+<div class="rr-left">
+<div class="rr-stars">⭐</div>
+<div class="rr-name">SOLID</div>
+</div>
+<div class="rr-right">
+<div class="rr-desc">Competently executed. Worth ordering if you're already there. Nothing fails, nothing distinguishes itself. Most burgers land here, and that's fine.</div>
+</div>
+</div>
+<div class="rating-row r0">
+<div class="rr-left">
+<div class="rr-stars">ㄨ</div>
+<div class="rr-name">SKIP IT</div>
+</div>
+<div class="rr-right">
+<div class="rr-desc">Not worth your time or money. Bad components, bad ratios, bad value. Better options exist and this isn't worth a visit.</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- STEP 2: COPY & POST -->
+<div class="section">
+<div class="section-label">◈ Step 2</div>
+<div class="section-title">POST TO BLUESKY</div>
+<p class="intro" style="margin-bottom: 20px;">Copy the template, paste it into a new Bluesky post, fill in your review, and attach a photo of the burger. That's it.</p>
+
+<div class="copy-block">
+<div class="block-bar">
+<div class="block-bar-left">Copy template</div>
+<button class="copy-btn" id="copyBtn" onclick="copyTemplate()">Copy</button>
+</div>
+<div class="copy-body">
+[Restaurant Name]<br>
+[City, State]<br>
+[⭐ or ⭐⭐ or ⭐⭐⭐ or ㄨ]<br>
+[$ or $$ or $$$]<br>
+<br>
+[Your review]<br>
+<br>
+<span class="tag">#CBDB</span>
+</div>
+</div>
+</div>
+
+<!-- STEP 3: FORMAT BREAKDOWN -->
+<div class="section">
+<div class="section-label">◈ Technical Details</div>
+<div class="section-title">HOW IT WORKS</div>
+<div class="section-desc">
+This is how the parser reads your Bluesky post. Each line has a specific role —
+line order matters, the blank lines matter, and the <em>#CBDB</em> tag is required.
+If anything is out of place, the post won't index. When in doubt, use the template above.
+</div>
+<table class="format-table">
+<tbody>
+<tr>
+<td>1</td>
+<td>Restaurant name</td>
+<td>Official name, consistent spelling every time</td>
+</tr>
+<tr>
+<td>2</td>
+<td>City, State</td>
+<td>Portland, OR &nbsp;·&nbsp; Seattle, WA &nbsp;·&nbsp; Tokyo, JP</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Rating</td>
+<td>⭐ &nbsp;⭐⭐ &nbsp;⭐⭐⭐ &nbsp;or &nbsp;ㄨ</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Price</td>
+<td>$ = under $12 &nbsp;·&nbsp; $$ = $12–22 &nbsp;·&nbsp; $$$ = over $22</td>
+</tr>
+<tr class="row-blank">
+<td>-</td>
+<td>blank line</td>
+<td>required — separates meta from review</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Your review</td>
+<td>Be specific — patty, bun, what worked, what didn't</td>
+</tr>
+<tr class="row-blank">
+<td>-</td>
+<td>blank line</td>
+<td>required — separates review from tag</td>
+</tr>
+<tr>
+<td>#</td>
+<td>#CBDB</td>
+<td>Required — this is how the parser finds your post</td>
+</tr>
+<tr>
+<td>📸</td>
+<td>Photo attached</td>
+<td>The burger, that visit — not a menu photo</td>
+</tr>
+</tbody>
+</table>
+
+<div class="footer-note">
+The format is public — anyone can read it.
+But the parser only indexes <a href="/contributor.html">approved contributors</a>.
+</div>
+</div>
+
+<script>
+function copyTemplate() {
+const text = `[Restaurant Name]
+[City, State]
+[⭐ or ⭐⭐ or ⭐⭐⭐ or ㄨ]
+[$ or $$ or $$$]
+
+[Your review]
+
+#CBDB`;
+const btn = document.getElementById('copyBtn');
+navigator.clipboard.writeText(text).then(() => {
+btn.textContent = 'Copied!';
+setTimeout(() => { btn.textContent = 'Copy'; }, 2500);
+}).catch(() => { alert(text); });
+}
+</script>
+
+<footer></footer>
+<script src="/shared.js"></script>
+</body>
+</html>

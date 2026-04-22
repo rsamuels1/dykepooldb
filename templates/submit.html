@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Add a Venue — Dyke Pool Reviews{% endblock %}
+
+{% block head %}
+<style>
+.form-page { max-width: 640px; margin: 0 auto; padding: 32px 16px 64px; }
+.form-section { margin-bottom: 40px; }
+.form-label { font-size: 9px; letter-spacing: 4px; color: var(--green); text-transform: uppercase; margin-bottom: 8px; display: block; }
+.form-input, .form-textarea, .form-select {
+    width: 100%; background: var(--bg2); border: 1px solid var(--afaint);
+    color: var(--w); font-family: var(--fbody); font-size: 13px;
+    padding: 12px 14px; outline: none;
+    transition: border-color 0.15s;
+    appearance: none; -webkit-appearance: none;
+}
+.form-input:focus, .form-textarea:focus, .form-select:focus { border-color: var(--green); }
+.form-textarea { resize: vertical; min-height: 120px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } }
+.form-hint { font-size: 10px; color: var(--adim); margin-top: 5px; letter-spacing: 0.5px; }
+
+.rating-options { display: flex; flex-direction: column; gap: 2px; }
+.rating-option { display: flex; align-items: stretch; cursor: pointer; }
+.rating-option input[type="radio"] { display: none; }
+.rating-option-label {
+    width: 100%; display: grid; grid-template-columns: 80px 1fr;
+    background: var(--bg2); border: 1px solid var(--afaint);
+    cursor: pointer; transition: border-color 0.15s;
+}
+.rating-option input:checked + .rating-option-label { border-color: var(--green); }
+.rating-option-badge {
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    padding: 14px 10px; border-right: 1px solid var(--afaint);
+    font-family: var(--fhead); font-size: 11px; letter-spacing: 2px; gap: 4px;
+}
+.rating-option-badge .stars { font-size: 14px; letter-spacing: 1px; }
+.r5-badge { color: #39FF14; }
+.r4-badge { color: #39FF14; }
+.r3-badge { color: #39FF14; }
+.r2-badge { color: #FFD000; }
+.r1-badge { color: #FF8C00; }
+.r0-badge { color: #666; }
+.rating-option-desc { padding: 14px 16px; font-size: 11px; line-height: 1.75; color: rgba(255,255,255,0.72); display: flex; align-items: center; }
+
+.bathroom-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+@media (max-width: 480px) { .bathroom-options { grid-template-columns: 1fr; } }
+.bathroom-option input[type="radio"] { display: none; }
+.bathroom-option-label {
+    display: block; text-align: center;
+    background: var(--bg2); border: 1px solid var(--afaint);
+    padding: 12px 8px; font-size: 10px; letter-spacing: 2px;
+    text-transform: uppercase; color: rgba(255,255,255,0.6);
+    cursor: pointer; transition: border-color 0.15s, color 0.15s;
+}
+.bathroom-option input:checked + .bathroom-option-label { border-color: var(--green); color: var(--green); }
+
+.error-banner {
+    background: rgba(255,80,80,0.1); border: 1px solid rgba(255,80,80,0.4);
+    color: rgba(255,160,160,0.9); padding: 12px 16px;
+    font-size: 11px; letter-spacing: 1px; margin-bottom: 28px;
+}
+
+.submit-btn {
+    width: 100%; font-family: var(--fbody); font-size: 13px; font-weight: 700;
+    letter-spacing: 3px; text-transform: uppercase;
+    background: var(--amber); color: var(--w); border: none;
+    padding: 18px; cursor: pointer; transition: filter 0.15s;
+}
+.submit-btn:hover { filter: brightness(1.12); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-page">
+    <div class="eyebrow">◈ Community Review</div>
+    <h1>ADD A<br>VENUE</h1>
+
+    {% if error %}
+    <div class="error-banner">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST" action="/submit">
+
+        <div class="form-section">
+            <label class="form-label" for="venue_name">Venue Name</label>
+            <input class="form-input" type="text" id="venue_name" name="venue_name"
+                   placeholder="The Mule Bar" required value="{{ request.form.get('venue_name', '') }}">
+        </div>
+
+        <div class="form-section">
+            <label class="form-label" for="location">Location</label>
+            <input class="form-input" type="text" id="location" name="location"
+                   placeholder="Portland, OR" required value="{{ request.form.get('location', '') }}">
+            <div class="form-hint">City, State</div>
+        </div>
+
+        <div class="form-section">
+            <div class="form-row">
+                <div>
+                    <label class="form-label" for="num_tables">Number of Tables</label>
+                    <input class="form-input" type="number" id="num_tables" name="num_tables"
+                           min="1" placeholder="1" required value="{{ request.form.get('num_tables', '') }}">
+                </div>
+                <div>
+                    <label class="form-label" for="price_per_game">Price per Game</label>
+                    <input class="form-input" type="text" id="price_per_game" name="price_per_game"
+                           placeholder="$0.50" required value="{{ request.form.get('price_per_game', '') }}">
+                    <div class="form-hint">e.g. $0.50, Free, Quarters</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <span class="form-label">Bathrooms</span>
+            <div class="bathroom-options">
+                {% for option in bathroom_options %}
+                <label class="bathroom-option">
+                    <input type="radio" name="bathroom_type" value="{{ option }}"
+                           {% if request.form.get('bathroom_type') == option %}checked{% endif %} required>
+                    <span class="bathroom-option-label">{{ option }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="form-section">
+            <span class="form-label">Rating</span>
+            <div class="rating-options">
+                <label class="rating-option">
+                    <input type="radio" name="rating" value="5"
+                           {% if request.form.get('rating') == '5' %}checked{% endif %} required>
+                    <span class="rating-option-label">
+                        <span class="rating-option-badge r5-badge">
+                            <span class="stars">🍒🍒🍒🍒🍒</span>
+                            <span>PERFECT</span>
+                        </span>
+                        <span class="rating-option-desc">Exceptional. A benchmark. The kind of table you return to and talk about.</span>
+                    </span>
+                </label>
+                <label class="rating-option">
+                    <input type="radio" name="rating" value="4"
+                           {% if request.form.get('rating') == '4' %}checked{% endif %} required>
+                    <span class="rating-option-label">
+                        <span class="rating-option-badge r4-badge">
+                            <span class="stars">🍒🍒🍒🍒</span>
+                            <span>EXCELLENT</span>
+                        </span>
+                        <span class="rating-option-desc">Exceptional. A benchmark. The kind of table you return to and talk about.</span>
+                    </span>
+                </label>
+                <label class="rating-option">
+                    <input type="radio" name="rating" value="3"
+                           {% if request.form.get('rating') == '3' %}checked{% endif %} required>
+                    <span class="rating-option-label">
+                        <span class="rating-option-badge r3-badge">
+                            <span class="stars">🍒🍒🍒</span>
+                            <span>PRETTY GOOD</span>
+                        </span>
+                        <span class="rating-option-desc">Exceptional. A benchmark. The kind of table you return to and talk about.</span>
+                    </span>
+                </label>
+                <label class="rating-option">
+                    <input type="radio" name="rating" value="2"
+                           {% if request.form.get('rating') == '2' %}checked{% endif %}>
+                    <span class="rating-option-label">
+                        <span class="rating-option-badge r2-badge">
+                            <span class="stars">🍒🍒</span>
+                            <span>DECENT</span>
+                        </span>
+                        <span class="rating-option-desc">Notably good. Worth going out of your way for.</span>
+                    </span>
+                </label>
+                <label class="rating-option">
+                    <input type="radio" name="rating" value="1"
+                           {% if request.form.get('rating') == '1' %}checked{% endif %}>
+                    <span class="rating-option-label">
+                        <span class="rating-option-badge r1-badge">
+                            <span class="stars">🍒</span>
+                            <span>OKAY</span>
+                        </span>
+                        <span class="rating-option-desc">Functional. Worth playing if you're already there.</span>
+                    </span>
+                </label>
+                <label class="rating-option">
+                    <input type="radio" name="rating" value="0"
+                           {% if request.form.get('rating') == '0' %}checked{% endif %}>
+                    <span class="rating-option-label">
+                        <span class="rating-option-badge r0-badge">
+                            <span class="stars">ㄨ</span>
+                            <span>SKIP IT</span>
+                        </span>
+                        <span class="rating-option-desc">Not worth your time or quarters.</span>
+                    </span>
+                </label>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <label class="form-label" for="notes">Notes</label>
+            <textarea class="form-textarea" id="notes" name="notes"
+                      placeholder="Table condition, lighting, chalk availability, vibe...">{{ request.form.get('notes', '') }}</textarea>
+            <div class="form-hint">Optional — be specific about what makes it worth knowing.</div>
+        </div>
+
+        <button type="submit" class="submit-btn">Submit Review</button>
+    </form>
+</div>
+{% endblock %}
