@@ -24,7 +24,10 @@ ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "gif"}
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
-DATABASE = os.path.join(os.path.dirname(__file__), "pool.db")
+DATABASE = os.environ.get(
+    "DATABASE_PATH",
+    os.path.join(os.path.dirname(__file__), "pool.db")
+)
 
 RATINGS = {
     5: {"label": "LEGENDARY",   "stars": "🍒🍒🍒🍒🍒", "cls": "r5"},
@@ -114,6 +117,13 @@ def admin_required(f):
             return redirect(url_for("admin_login"))
         return f(*args, **kwargs)
     return decorated
+
+
+# Run DB setup regardless of how the app is started (gunicorn or direct)
+if not os.path.exists(DATABASE):
+    init_db()
+else:
+    migrate_db()
 
 
 # ── Public routes ────────────────────────────────────────────────────────────
@@ -292,4 +302,5 @@ if __name__ == "__main__":
         init_db()
     else:
         migrate_db()
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=False, host="0.0.0.0", port=port)
