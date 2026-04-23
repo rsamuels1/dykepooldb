@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from functools import wraps
+from urllib.parse import parse_qsl, urlparse, urlencode, urlunparse
 
 import psycopg2
 import psycopg2.errors
@@ -28,10 +29,30 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-DATABASE_URL = os.environ.get("DATABASE_URL", "")
-# Railway (and some other hosts) provide postgres:// but psycopg2 requires postgresql://
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+def normalize_database_url(database_url: str) -> str:
+    if not database_url:
+        return database_url
+    database_url = database_url.strip()
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
+
+    parsed = urlparse(database_url)
+    query = dict(parse_qsl(parsed.query, keep_blank_values=True))
+    # psycopg2 can reject unsupported URL params such as channel_binding in some
+    # runtime environments, so normalize the URL and preserve only safe params.
+    query.pop("channel_binding", None)
+    if "sslmode" not in query:
+        query["sslmode"] = "require"
+
+    return urlunparse(parsed._replace(query=urlencode(query)))
+
+
+DATABASE_URL = normalize_database_url(os.environ.get("DATABASE_URL", ""))
+if not DATABASE_URL:
+    raise RuntimeError(
+        "DATABASE_URL environment variable is required. "
+        "Set it in Railway or your deployment environment."
+    )
 
 RATINGS = {
     5: {"label": "LEGENDARY",   "stars": "🍒🍒🍒🍒🍒", "cls": "r5"},
