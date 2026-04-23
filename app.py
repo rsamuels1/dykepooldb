@@ -335,7 +335,7 @@ def api_stats():
         "by_city":      sorted(cities.items(), key=lambda x: -x[1]),
         "by_price":     sorted(by_price.items(), key=lambda x: -x[1]),
         "by_bathroom":  sorted(by_bathroom.items(), key=lambda x: -x[1]),
-        "by_quadrant":  sorted(by_quadrant.items(), key=lambda x: x[0]),
+        "by_quadrant":  sorted(by_quadrant.items(), key=lambda x: x[1]),
     })
 
 
