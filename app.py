@@ -140,11 +140,24 @@ def admin_required(f):
     return decorated
 
 
-# Run DB setup regardless of how the app is started (gunicorn or direct)
-if not _table_exists():
-    init_db()
-else:
-    migrate_db()
+_db_initialized = False
+
+
+def ensure_db_initialized():
+    """Initialize the database on first request instead of at import time."""
+    global _db_initialized
+    if _db_initialized:
+        return
+    if not _table_exists():
+        init_db()
+    else:
+        migrate_db()
+    _db_initialized = True
+
+
+@app.before_request
+def before_request():
+    ensure_db_initialized()
 
 
 # ── Public routes ────────────────────────────────────────────────────────────
@@ -336,9 +349,5 @@ def admin_delete(venue_id):
 
 
 if __name__ == "__main__":
-    if not _table_exists():
-        init_db()
-    else:
-        migrate_db()
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=False, host="0.0.0.0", port=port)
