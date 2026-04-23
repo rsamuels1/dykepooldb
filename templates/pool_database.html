@@ -121,7 +121,7 @@
                 <div class="card-text">{{ venue['notes'] }}</div>
                 {% endif %}
                 <div class="card-foot">
-                    <span class="card-date">{{ venue['created_at'][:10] }}</span>
+                    <span class="card-date">{{ venue['created_at'].strftime('%Y-%m-%d') if venue['created_at'] else '' }}</span>
                 </div>
             </div>
         </a>
