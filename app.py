@@ -209,7 +209,11 @@ def pool_database():
         "SELECT DISTINCT price_per_game FROM venues WHERE status = 'approved' ORDER BY price_per_game"
     )
     prices = [r["price_per_game"] for r in cur.fetchall()]
-    return render_template("pool_database.html", venues=venues, ratings=RATINGS, prices=prices)
+    cur.execute(
+        "SELECT DISTINCT quadrant FROM venues WHERE status = 'approved' AND quadrant IS NOT NULL ORDER BY quadrant"
+    )
+    quadrants = [r["quadrant"] for r in cur.fetchall()]
+    return render_template("pool_database.html", venues=venues, ratings=RATINGS, prices=prices, quadrants=quadrants)
 
 
 @app.route("/pool-database/<int:venue_id>")
@@ -239,6 +243,7 @@ def submit():
         bathroom_type  = request.form.get("bathroom_type", "").strip()
         rating         = request.form.get("rating", "").strip()
         notes          = request.form.get("notes", "").strip()
+        quadrant       = request.form.get("quadrant", "").strip() or None
 
         if not all([venue_name, location, num_tables, price_per_game, bathroom_type, rating]):
             error = "All fields except notes and photo are required."
@@ -261,10 +266,10 @@ def submit():
                 cur.execute(
                     """INSERT INTO venues
                        (venue_name, location, num_tables, price_per_game,
-                        bathroom_type, rating, notes, photo_url, status)
-                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pending')""",
+                        bathroom_type, rating, notes, photo_url, quadrant, status)
+                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'pending')""",
                     [venue_name, location, int(num_tables), price_per_game,
-                     bathroom_type, int(rating), notes, photo_url],
+                     bathroom_type, int(rating), notes, photo_url, quadrant],
                 )
                 db.commit()
                 send_submission_email(venue_name, location, int(rating))
@@ -290,7 +295,7 @@ def api_stats():
     db = get_db()
     cur = db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute(
-        "SELECT rating, location, created_at, num_tables, price_per_game, bathroom_type "
+        "SELECT rating, location, created_at, num_tables, price_per_game, bathroom_type, quadrant "
         "FROM venues WHERE status = 'approved'"
     )
     venues = cur.fetchall()
@@ -299,6 +304,7 @@ def api_stats():
     cities = {}
     by_price = {}
     by_bathroom = {}
+    by_quadrant = {}
     year_ago = datetime.now() - timedelta(days=365)
     this_year = 0
     total_tables = 0
@@ -313,6 +319,8 @@ def api_stats():
         by_price[price] = by_price.get(price, 0) + 1
         bathroom = v["bathroom_type"] or "Unknown"
         by_bathroom[bathroom] = by_bathroom.get(bathroom, 0) + 1
+        if v["quadrant"]:
+            by_quadrant[v["quadrant"]] = by_quadrant.get(v["quadrant"], 0) + 1
 
     ratings_sum = sum(v["rating"] for v in venues)
     avg_rating = round(ratings_sum / len(venues), 1) if venues else 0
@@ -327,6 +335,7 @@ def api_stats():
         "by_city":      sorted(cities.items(), key=lambda x: -x[1]),
         "by_price":     sorted(by_price.items(), key=lambda x: -x[1]),
         "by_bathroom":  sorted(by_bathroom.items(), key=lambda x: -x[1]),
+        "by_quadrant":  sorted(by_quadrant.items(), key=lambda x: x[0]),
     })
 
 

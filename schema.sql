@@ -9,6 +9,7 @@ CREATE TABLE venues (
     rating         INTEGER NOT NULL DEFAULT 1 CHECK(rating BETWEEN 0 AND 5),
     notes          TEXT,
     photo_url      TEXT,
+    quadrant       TEXT,
     status         TEXT    NOT NULL DEFAULT 'approved',
     created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

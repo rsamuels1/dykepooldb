@@ -92,10 +92,20 @@
         </div>
 
         <div class="form-section">
-            <label class="form-label" for="location">Location</label>
-            <input class="form-input" type="text" id="location" name="location"
-                   placeholder="Portland, OR" required value="{{ request.form.get('location', '') }}">
-            <div class="form-hint">City, State</div>
+            <div class="form-row">
+                <div>
+                    <label class="form-label" for="location">Location</label>
+                    <input class="form-input" type="text" id="location" name="location"
+                           placeholder="Portland, OR" required value="{{ request.form.get('location', '') }}">
+                    <div class="form-hint">City, State</div>
+                </div>
+                <div>
+                    <label class="form-label" for="quadrant">Quadrant</label>
+                    <input class="form-input" type="text" id="quadrant" name="quadrant"
+                           placeholder="NE, SE, NW…" value="{{ request.form.get('quadrant', '') }}">
+                    <div class="form-hint">Optional — neighborhood quadrant</div>
+                </div>
+            </div>
         </div>
 
         <div class="form-section">

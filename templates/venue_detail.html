@@ -13,6 +13,7 @@
 @media (max-width: 560px) { .detail-hero { grid-template-columns: 1fr; } }
 
 .detail-img { aspect-ratio: 16/10; overflow: hidden; }
+.detail-img img { filter: grayscale(100%); }
 .detail-img svg { width: 100%; height: 100%; display: block; }
 
 .detail-stamp {
@@ -97,6 +98,12 @@
                 <span class="meta-key">Bathrooms</span>
                 <span class="meta-val">{{ venue['bathroom_type'] }}</span>
             </div>
+            {% if venue['quadrant'] %}
+            <div class="meta-row">
+                <span class="meta-key">Quadrant</span>
+                <span class="meta-val">{{ venue['quadrant'] }}</span>
+            </div>
+            {% endif %}
         </div>
     </div>
 
