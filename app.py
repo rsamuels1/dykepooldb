@@ -69,7 +69,7 @@ BATHROOM_OPTIONS = ["Gender-Neutral", "Gendered", "None"]
 def get_db():
     db = getattr(g, "_database", None)
     if db is None:
-        db = g._database = psycopg2.connect(DATABASE_URL, connect_timeout=10, sslmode="require")
+        db = g._database = psycopg2.connect(DATABASE_URL, connect_timeout=10)
     return db
 
 
@@ -81,7 +81,7 @@ def close_connection(exception):
 
 
 def _connect():
-    return psycopg2.connect(DATABASE_URL, connect_timeout=10, sslmode="require")
+    return psycopg2.connect(DATABASE_URL, connect_timeout=10)
 
 
 def init_db():
