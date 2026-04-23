@@ -99,6 +99,7 @@
                 <form method="POST" action="/admin/approve/{{ venue['id'] }}" style="margin:0;">
                     <button type="submit" class="btn-approve">✓ Publish</button>
                 </form>
+                <a href="/admin/edit/{{ venue['id'] }}" class="btn-reject" style="text-decoration:none; display:inline-flex; align-items:center;">✎ Edit</a>
                 <form method="POST" action="/admin/reject/{{ venue['id'] }}" style="margin:0;">
                     <button type="submit" class="btn-reject"
                             onclick="return confirm('Delete this submission permanently?')">✕ Reject</button>
@@ -125,6 +126,7 @@
             </div>
         </div>
         <div class="pending-actions">
+            <a href="/admin/edit/{{ venue['id'] }}" class="btn-reject" style="text-decoration:none; display:inline-flex; align-items:center;">✎ Edit</a>
             <form method="POST" action="/admin/delete/{{ venue['id'] }}" style="margin:0;">
                 <button type="submit" class="btn-delete"
                         onclick="return confirm('Permanently delete {{ venue['venue_name'] }}?')">✕ Delete</button>

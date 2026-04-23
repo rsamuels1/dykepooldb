@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit — {{ venue['venue_name'] }} · Admin</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>🍒🎱</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+    .edit-wrap { max-width: 680px; margin: 0 auto; padding: 40px 20px 80px; }
+    .edit-title { font-family: var(--fhead); font-size: 28px; letter-spacing: 3px; color: var(--amber); margin-bottom: 4px; }
+    .edit-sub { font-size: 10px; letter-spacing: 2px; color: var(--adim); text-transform: uppercase; margin-bottom: 36px; }
+    .field { margin-bottom: 20px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    @media (max-width: 500px) { .field-row { grid-template-columns: 1fr; } }
+    .field-label { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--green); margin-bottom: 6px; display: block; }
+    .field-input, .field-select, .field-textarea {
+        width: 100%; background: var(--bg2); border: 1px solid var(--afaint);
+        color: var(--w); font-family: var(--fbody); font-size: 13px;
+        padding: 10px 12px; outline: none; transition: border-color 0.15s;
+        appearance: none; -webkit-appearance: none;
+    }
+    .field-input:focus, .field-select:focus, .field-textarea:focus { border-color: var(--green); }
+    .field-textarea { resize: vertical; min-height: 100px; }
+    .rating-row { display: flex; flex-direction: column; gap: 2px; }
+    .r-opt { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 8px 12px; background: var(--bg2); border: 1px solid var(--afaint); }
+    .r-opt input { display: none; }
+    .r-opt:has(input:checked) { border-color: var(--green); }
+    .r-stars { font-size: 13px; min-width: 90px; font-family: var(--fhead); letter-spacing: 1px; }
+    .r5 { color: #39FF14; } .r4 { color: #C8FF00; } .r3 { color: #FFD000; }
+    .r2 { color: #FF7A00; } .r1 { color: #FF3B5C; } .r0 { color: #666; }
+    .bathroom-row { display: flex; gap: 4px; flex-wrap: wrap; }
+    .b-opt { cursor: pointer; }
+    .b-opt input { display: none; }
+    .b-opt span { display: block; padding: 8px 16px; background: var(--bg2); border: 1px solid var(--afaint); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.6); transition: border-color 0.15s, color 0.15s; }
+    .b-opt:has(input:checked) span { border-color: var(--green); color: var(--green); }
+    .actions { display: flex; gap: 8px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--afaint); }
+    .btn-save { background: var(--amber); color: var(--bg); border: none; font-family: var(--fbody); font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; padding: 12px 28px; cursor: pointer; }
+    .btn-save:hover { filter: brightness(1.1); }
+    .btn-cancel { background: transparent; color: var(--adim); border: 1px solid var(--afaint); font-family: var(--fbody); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; padding: 12px 20px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
+    .btn-cancel:hover { color: var(--w); border-color: rgba(255,255,255,0.3); }
+    </style>
+</head>
+<body>
+
+<nav style="position:sticky; top:0; z-index:100; height:52px; background:rgba(6,6,6,0.97); backdrop-filter:blur(12px); border-bottom:1px solid var(--afaint); display:flex; align-items:center; justify-content:space-between; padding:0 20px;">
+    <span style="font-family:var(--fhead); font-size:18px; letter-spacing:3px; color:var(--amber);">DYKE POOL DB · ADMIN</span>
+    <a href="/admin/logout" style="font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--adim); text-decoration:none;">Sign Out</a>
+</nav>
+
+<div class="edit-wrap">
+    <div class="edit-title">EDIT VENUE</div>
+    <div class="edit-sub">ID #{{ venue['id'] }} · {{ 'Pending' if venue['status'] == 'pending' else 'Published' }}</div>
+
+    <form method="POST" action="/admin/edit/{{ venue['id'] }}">
+
+        <div class="field">
+            <label class="field-label" for="venue_name">Venue Name</label>
+            <input class="field-input" type="text" id="venue_name" name="venue_name" required
+                   value="{{ venue['venue_name'] }}">
+        </div>
+
+        <div class="field-row">
+            <div>
+                <label class="field-label" for="location">Location</label>
+                <input class="field-input" type="text" id="location" name="location" required
+                       value="{{ venue['location'] }}">
+            </div>
+            <div>
+                <label class="field-label" for="quadrant">Quadrant</label>
+                <input class="field-input" type="text" id="quadrant" name="quadrant"
+                       placeholder="NE, SE, NW…" value="{{ venue['quadrant'] or '' }}">
+            </div>
+        </div>
+
+        <div class="field-row">
+            <div>
+                <label class="field-label" for="num_tables">Number of Tables</label>
+                <input class="field-input" type="number" id="num_tables" name="num_tables" min="1" required
+                       value="{{ venue['num_tables'] }}">
+            </div>
+            <div>
+                <label class="field-label" for="price_per_game">Price per Game</label>
+                <input class="field-input" type="text" id="price_per_game" name="price_per_game" required
+                       value="{{ venue['price_per_game'] }}">
+            </div>
+        </div>
+
+        <div class="field">
+            <span class="field-label">Bathrooms</span>
+            <div class="bathroom-row">
+                {% for option in bathroom_options %}
+                <label class="b-opt">
+                    <input type="radio" name="bathroom_type" value="{{ option }}"
+                           {% if venue['bathroom_type'] == option %}checked{% endif %} required>
+                    <span>{{ option }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="field">
+            <span class="field-label">Rating</span>
+            <div class="rating-row">
+                {% for val, r in ratings.items()|sort %}
+                <label class="r-opt">
+                    <input type="radio" name="rating" value="{{ val }}"
+                           {% if venue['rating'] == val %}checked{% endif %} required>
+                    <span class="r-stars r{{ val }}">{{ r['stars'] }} {{ r['label'] }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="field">
+            <label class="field-label" for="notes">Notes</label>
+            <textarea class="field-textarea" id="notes" name="notes">{{ venue['notes'] or '' }}</textarea>
+        </div>
+
+        <div class="field">
+            <label class="field-label" for="status">Status</label>
+            <select class="field-select" id="status" name="status">
+                <option value="pending"  {% if venue['status'] == 'pending'  %}selected{% endif %}>Pending</option>
+                <option value="approved" {% if venue['status'] == 'approved' %}selected{% endif %}>Published</option>
+            </select>
+        </div>
+
+        <div class="actions">
+            <button type="submit" class="btn-save">Save Changes</button>
+            <a href="/admin" class="btn-cancel">Cancel</a>
+        </div>
+    </form>
+</div>
+
+</body>
+</html>

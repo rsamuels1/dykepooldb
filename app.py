@@ -396,6 +396,43 @@ def admin_reject(venue_id):
     return redirect(url_for("admin"))
 
 
+@app.route("/admin/edit/<int:venue_id>", methods=["GET", "POST"])
+@admin_required
+def admin_edit(venue_id):
+    if not ensure_db_initialized():
+        return "Database unavailable — please try again shortly.", 503
+    db = get_db()
+    if request.method == "POST":
+        cur = db.cursor()
+        cur.execute(
+            """UPDATE venues SET
+               venue_name = %s, location = %s, quadrant = %s,
+               num_tables = %s, price_per_game = %s, bathroom_type = %s,
+               rating = %s, notes = %s, status = %s
+               WHERE id = %s""",
+            [
+                request.form.get("venue_name", "").strip(),
+                request.form.get("location", "").strip(),
+                request.form.get("quadrant", "").strip() or None,
+                int(request.form.get("num_tables", 1)),
+                request.form.get("price_per_game", "").strip(),
+                request.form.get("bathroom_type", "").strip(),
+                int(request.form.get("rating", 1)),
+                request.form.get("notes", "").strip() or None,
+                request.form.get("status", "approved"),
+                venue_id,
+            ],
+        )
+        db.commit()
+        return redirect(url_for("admin"))
+    cur = db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT * FROM venues WHERE id = %s", [venue_id])
+    venue = cur.fetchone()
+    if venue is None:
+        return "Venue not found", 404
+    return render_template("admin_edit.html", venue=venue, ratings=RATINGS, bathroom_options=BATHROOM_OPTIONS)
+
+
 @app.route("/admin/delete/<int:venue_id>", methods=["POST"])
 @admin_required
 def admin_delete(venue_id):
