@@ -108,7 +108,7 @@
     {% endif %}
 
     <div class="detail-foot">
-        <span class="detail-date">Added {{ venue['created_at'][:10] }}</span>
+        <span class="detail-date">Added {{ venue['created_at'].strftime('%Y-%m-%d') if venue['created_at'] else '—' }}</span>
     </div>
 </div>
 {% endblock %}
