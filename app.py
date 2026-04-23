@@ -192,6 +192,11 @@ def ensure_db_initialized():
 
 # ── Public routes ────────────────────────────────────────────────────────────
 
+@app.route("/")
+def index():
+    return app.send_static_file("index.html")
+
+
 @app.route("/pool-database")
 def pool_database():
     if not ensure_db_initialized():
