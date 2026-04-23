@@ -148,26 +148,33 @@ _db_initialized = False
 
 
 def ensure_db_initialized():
-    """Initialize the database on first request instead of at import time."""
+    """Initialize the database lazily on first use, with error handling.
+
+    Returns True if the database is ready, False if the connection failed.
+    Called explicitly by routes that need the database rather than on every
+    request, so the app can start and serve non-DB routes immediately.
+    """
     global _db_initialized
     if _db_initialized:
-        return
-    if not _table_exists():
-        init_db()
-    else:
-        migrate_db()
-    _db_initialized = True
-
-
-@app.before_request
-def before_request():
-    ensure_db_initialized()
+        return True
+    try:
+        if not _table_exists():
+            init_db()
+        else:
+            migrate_db()
+        _db_initialized = True
+        return True
+    except Exception as e:
+        print(f"[DB] Database initialization failed: {e}")
+        return False
 
 
 # ── Public routes ────────────────────────────────────────────────────────────
 
 @app.route("/pool-database")
 def pool_database():
+    if not ensure_db_initialized():
+        return "Database unavailable — please try again shortly.", 503
     db = get_db()
     cur = db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT * FROM venues WHERE status = 'approved' ORDER BY created_at DESC")
@@ -181,6 +188,8 @@ def pool_database():
 
 @app.route("/pool-database/<int:venue_id>")
 def venue_detail(venue_id):
+    if not ensure_db_initialized():
+        return "Database unavailable — please try again shortly.", 503
     db = get_db()
     cur = db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT * FROM venues WHERE id = %s AND status = 'approved'", [venue_id])
@@ -193,6 +202,8 @@ def venue_detail(venue_id):
 @app.route("/submit", methods=["GET", "POST"])
 @app.route("/contributor", methods=["GET", "POST"])
 def submit():
+    if not ensure_db_initialized():
+        return "Database unavailable — please try again shortly.", 503
     error = None
     if request.method == "POST":
         venue_name     = request.form.get("venue_name", "").strip()
@@ -248,6 +259,8 @@ def submit_thanks():
 
 @app.route("/api/stats")
 def api_stats():
+    if not ensure_db_initialized():
+        return jsonify({"error": "Database unavailable — please try again shortly."}), 503
     db = get_db()
     cur = db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute(
@@ -313,6 +326,8 @@ def admin_logout():
 @app.route("/admin")
 @admin_required
 def admin():
+    if not ensure_db_initialized():
+        return "Database unavailable — please try again shortly.", 503
     db = get_db()
     cur = db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT * FROM venues WHERE status = 'pending' ORDER BY created_at DESC")
@@ -325,6 +340,8 @@ def admin():
 @app.route("/admin/approve/<int:venue_id>", methods=["POST"])
 @admin_required
 def admin_approve(venue_id):
+    if not ensure_db_initialized():
+        return "Database unavailable — please try again shortly.", 503
     db = get_db()
     cur = db.cursor()
     cur.execute("UPDATE venues SET status = 'approved' WHERE id = %s", [venue_id])
@@ -335,6 +352,8 @@ def admin_approve(venue_id):
 @app.route("/admin/reject/<int:venue_id>", methods=["POST"])
 @admin_required
 def admin_reject(venue_id):
+    if not ensure_db_initialized():
+        return "Database unavailable — please try again shortly.", 503
     db = get_db()
     cur = db.cursor()
     cur.execute("DELETE FROM venues WHERE id = %s AND status = 'pending'", [venue_id])
@@ -345,6 +364,8 @@ def admin_reject(venue_id):
 @app.route("/admin/delete/<int:venue_id>", methods=["POST"])
 @admin_required
 def admin_delete(venue_id):
+    if not ensure_db_initialized():
+        return "Database unavailable — please try again shortly.", 503
     db = get_db()
     cur = db.cursor()
     cur.execute("DELETE FROM venues WHERE id = %s", [venue_id])
