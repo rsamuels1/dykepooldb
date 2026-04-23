@@ -48,7 +48,7 @@ BATHROOM_OPTIONS = ["Gender-Neutral", "Gendered", "None"]
 def get_db():
     db = getattr(g, "_database", None)
     if db is None:
-        db = g._database = psycopg2.connect(DATABASE_URL)
+        db = g._database = psycopg2.connect(DATABASE_URL, connect_timeout=10, sslmode="require")
     return db
 
 
@@ -59,8 +59,12 @@ def close_connection(exception):
         db.close()
 
 
+def _connect():
+    return psycopg2.connect(DATABASE_URL, connect_timeout=10, sslmode="require")
+
+
 def init_db():
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = _connect()
     cur = conn.cursor()
     with open(os.path.join(os.path.dirname(__file__), "schema.sql")) as f:
         sql = f.read()
@@ -74,7 +78,7 @@ def init_db():
 
 
 def migrate_db():
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = _connect()
     cur = conn.cursor()
     try:
         cur.execute("ALTER TABLE venues ADD COLUMN status TEXT NOT NULL DEFAULT 'approved'")
@@ -87,7 +91,7 @@ def migrate_db():
 
 
 def _table_exists():
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = _connect()
     cur = conn.cursor()
     cur.execute("SELECT to_regclass('public.venues')")
     result = cur.fetchone()
