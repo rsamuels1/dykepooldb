@@ -50,7 +50,16 @@ nav.nav-fixed { position: fixed; left: 0; right: 0; }
 .nav-links .active { color: var(--amber); }
 .nav-links .pill { border: 1px solid var(--amber); color: var(--amber) !important; margin-left: 6px; }
 .nav-links .pill:hover { background: rgba(232,0,90,0.08); }
-@media (max-width: 580px) { .nav-links .hide { display: none; } }
+.hamburger { display: none; background: none; border: none; color: var(--w); cursor: pointer; font-size: 20px; padding: 6px 4px; }
+@media (max-width: 580px) {
+    nav { height: auto; flex-wrap: wrap; }
+    .hamburger { display: block; }
+    .nav-links { display: none; width: 100%; flex-direction: column; gap: 0; padding: 8px 0; }
+    .nav-links.active { display: flex; }
+    .nav-links li { width: 100%; }
+    .nav-links a { display: block; padding: 10px 20px; white-space: normal; }
+    .nav-links .pill { margin-left: 0; margin-top: 8px; }
+}
 
 /* --- FOOTER --------------------------------------- */
 footer {
