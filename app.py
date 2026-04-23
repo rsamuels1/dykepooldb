@@ -324,10 +324,12 @@ def api_stats():
 
     ratings_sum = sum(v["rating"] for v in venues)
     avg_rating = round(ratings_sum / len(venues), 1) if venues else 0
+    gender_neutral_pct = round(by_bathroom.get("Gender-Neutral", 0) / len(venues) * 100) if venues else 0
 
     return jsonify({
         "total":        len(venues),
         "cities":       len(cities),
+        "gender_neutral_pct": gender_neutral_pct,
         "avg_rating":   avg_rating,
         "this_year":    this_year,
         "total_tables": total_tables,

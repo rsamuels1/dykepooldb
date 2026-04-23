@@ -28,8 +28,8 @@
 <div class="num-value loading" id="stat-tables">—</div>
 </div>
 <div class="num-card">
-<div class="num-label">Cities</div>
-<div class="num-value loading" id="stat-cities">—</div>
+<div class="num-label">% Gender Neutral</div>
+<div class="num-value loading" id="stat-gender-neutral">—</div>
 </div>
 <div class="num-card">
 <div class="num-label">Avg Rating</div>
@@ -115,6 +115,7 @@ async function loadStats() {
     set('stat-total', d.total);
     set('stat-tables', d.total_tables);
     set('stat-cities', d.cities);
+    set('stat-gender-neutral', d.gender_neutral_pct + '%');
     set('stat-contributors', d.avg_rating);
     set('stat-year', d.this_year);
 
